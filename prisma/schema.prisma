@@ -1,0 +1,203 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model AccountSubType {
+  accountSubTypeId String @id @default(cuid())
+  name String
+  category String
+  type String
+
+  accounts Account[]
+
+  @@unique([name, category, type])
+}
+
+
+model Account {
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  accountId        String           @id @default(cuid())
+  
+  name             String
+  number           Int
+  denomination     String?
+  
+  category         String
+  type             String
+  accountSubTypeId String?
+  accountSubType   AccountSubType? @relation(fields: [accountSubTypeId], references: [accountSubTypeId])
+
+  transactions Transaction[]
+
+  children AccountClosure[] @relation(name: "parentAccount")
+  parents  AccountClosure[] @relation(name: "childAccount")
+
+  suppliers Supplier[]
+  customers Customer[]
+}
+
+model AccountClosure {
+  parentAccountId String
+  parentAccount   Account @relation(fields: [parentAccountId], references: [accountId], name: "parentAccount")
+
+  childAccountId String
+  childAccount   Account @relation(fields: [childAccountId], references: [accountId], name: "childAccount")
+
+  depth Int
+
+  @@unique([parentAccountId, childAccountId, depth])
+}
+
+model Ledger {
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ledgerId  String   @id @default(cuid())
+
+  name       String
+  ledgerType String @default("nominal")
+
+  transactions Transaction[]
+  customers    Customer[]
+  suppliers    Supplier[]
+}
+
+model Transaction {
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  transactionId String   @id @default(cuid())
+
+  // TODO implement transaction types so that in supplier accounts you can show total Amount instead of debit and credit
+  transactionType String
+
+  transactionDate DateTime
+  description     String
+
+  debitAmount  Float
+  creditAmount Float
+
+  denomination String
+
+  accountId String?
+  account   Account? @relation(fields: [accountId], references: [accountId])
+
+  supplierId String?
+  supplier Supplier? @relation(fields: [supplierId], references: [supplierId])
+  
+  customerId String?
+  customer Customer? @relation(fields: [customerId], references: [customerId])
+
+  journalEntryId String
+  jounralEntry   JournalEntry @relation(fields: [journalEntryId], references: [journalEntryId])
+
+  ledgerId String
+  ledger   Ledger @relation(fields: [ledgerId], references: [ledgerId])
+}
+
+model JournalEntry {
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  journalEntryId String   @id @default(cuid())
+
+
+  exchangeRate Float?
+
+  bankReconciledDate DateTime?
+  vatReportedDate    DateTime?
+
+  transactions Transaction[]
+}
+
+model Supplier {
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  supplierId String   @id @default(cuid())
+
+  name         String
+  denomination String
+
+  defaultNominalAccountId String
+  defaultNominalAccount   Account @relation(fields: [defaultNominalAccountId], references: [accountId])
+
+  shippingAddressId String?  @unique
+  shippingAddress   Address? @relation(name: "supplierShippingAddress", fields: [shippingAddressId], references: [addressId])
+
+  billingAddressId String?  @unique
+  billingAddress   Address? @relation(name: "supplierBillingAddress", fields: [billingAddressId], references: [addressId])
+
+  ledgerId String
+  ledger   Ledger @relation(fields: [ledgerId], references: [ledgerId])
+
+  transactions Transaction[]
+}
+
+model Customer {
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  customerId String   @id @default(cuid())
+
+  name         String
+  denomination String
+
+  defaultNominalAccountId String
+  defaultNominalAccount   Account @relation(fields: [defaultNominalAccountId], references: [accountId])
+
+  shippingAddressId String?  @unique
+  shippingAddress   Address? @relation(name: "customerShippingAddress", fields: [shippingAddressId], references: [addressId])
+
+  billingAddressId String?  @unique
+  billingAddress   Address? @relation(name: "customerBillingAddress", fields: [billingAddressId], references: [addressId])
+
+  ledgerId String
+  ledger   Ledger @relation(fields: [ledgerId], references: [ledgerId])
+
+  transactions Transaction[]
+}
+
+model Address {
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  addressId String   @id @default(cuid())
+
+  addressLine1 String
+  addressLine2 String?
+  addressLine3 String?
+  addressLine4 String?
+
+  city                String?
+  provinceStateCounty String?
+  zipPostalCode       String?
+
+  country String
+
+  customerByBilling  Customer? @relation(name: "customerBillingAddress")
+  customerByShipping Customer? @relation(name: "customerShippingAddress")
+
+  supplierByBilling  Supplier? @relation(name: "supplierBillingAddress")
+  supplierByShipping Supplier? @relation(name: "supplierShippingAddress")
+}
+
+// model Invoice {
+//   invoiceId String @id @default(cuid())
+
+//   status String
+
+//   // customer or supplier
+
+//   // line items
+// }
+
+// model Bank {
+//   bankId String @id @default(cuid())
+
+//   nominalAccountId String
+//   nominalAccount Account @relation(fields: [nominalAccountId], references: [accountId])
+// }
