@@ -1,5 +1,4 @@
 import { Account, AccountClosure, PrismaClient } from "@prisma/client";
-import { sqltag } from "@prisma/client/runtime";
 
 type Node<T> = T & { children: Node<T>[] }
 

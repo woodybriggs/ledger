@@ -10,16 +10,16 @@ import { Account } from "@prisma/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
-import { CustomerDto } from "../../pages/api/customers";
-import { AccountSelect } from "../components/AccountSelect";
-import { CurrencySelect } from "../components/CurrencySelect";
-import { AccountType } from "../constants/account-taxonimies";
-import { AddressType, CreateAddressDto } from "../schemas/address.schema";
-import { CreateCustomerDto } from "../schemas/customer.schema";
-import { api, QueryMutationKey } from "../utils/api-client";
+import { AccountSelect } from "@src/components/AccountSelect";
+import { CurrencySelect } from "@src/components/CurrencySelect";
+import { AccountType } from "@src/constants/account-taxonimies";
+import { AddressType, CreateAddressDto } from "@src/schemas/address.schema";
+import { CreateCustomerDto, CustomerDto } from "@src/schemas/customer.schema";
+import { api, QueryMutationKey } from "@src/utils/api-client";
+import { AccountDto } from "@src/schemas/account.schema";
 
 type CustomerFormValues = {
-  customer: CreateCustomerDto & { defaultNominalAccount: Account };
+  customer: CreateCustomerDto & { defaultNominalAccount: AccountDto };
   shippingAddress?: CreateAddressDto | null;
   shippingAddressSameAsBilling: boolean;
   billingAddress?: CreateAddressDto | null;

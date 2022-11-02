@@ -1,7 +1,7 @@
 import { Loader, Select, SelectProps } from "@mantine/core"
 import { Supplier } from "@prisma/client"
 import { useQuery } from "@tanstack/react-query"
-import { api, QueryMutationKey } from "../utils/api-client"
+import { api, QueryMutationKey } from "@src/utils/api-client"
 
 type SupplierSelectProps = Omit<SelectProps, 'data' | 'onChange'> & { onChange: (item?: Supplier) => void }
 

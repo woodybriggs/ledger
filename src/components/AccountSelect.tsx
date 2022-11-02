@@ -2,12 +2,13 @@ import { Group, Loader, Select, SelectItem, SelectProps, Text } from "@mantine/c
 import { Account } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 import { forwardRef } from "react";
-import { AccountType } from "../constants/account-taxonimies";
-import { api, QueryMutationKey, queryMutationKey } from "../utils/api-client";
+import { AccountType } from "@src/constants/account-taxonimies";
+import { api, QueryMutationKey, queryMutationKey } from "@src/utils/api-client";
+import { AccountDto } from "@src/schemas/account.schema";
 
 type AccountSelectProps = Omit<SelectProps, "data" | "onChange" | "value"> & {
-  onChange: (value: Account | undefined) => void,
-  value: Account | undefined
+  onChange: (value: AccountDto | undefined) => void,
+  value: AccountDto | undefined
 } & ({ setting: 'include', types: 'all' | AccountType | (AccountType)[] } | {setting: 'exclude', types: 'all' | AccountType | (AccountType)[]});
 
 type AccountSelectItemData = SelectItem & { accountSubTypeName?: string,
@@ -71,7 +72,7 @@ export const AccountSelect: React.FC<AccountSelectProps> = ({
       itemComponent={SelectItem}
       searchable
       data={options}
-      onChange={(item) => onChange(data.data.find((a) => a.accountId === item))}
+      onChange={(item) => item && onChange(data.data.find(a => a.accountId === item))}
       value={value?.accountId}
     />
   );

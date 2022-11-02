@@ -6,12 +6,12 @@ export enum AccountCategory {
   LongTermLiabilities = "Long-Term Liabilities",
 
   Equity = "Equity",
+  
   Income = "Income",
-
+  OtherIncome = "Other Income",
+  
   DirectCosts = "Direct Costs",
   IndirectCosts = "Indirect Costs",
-
-  OtherIncome = "Other Income",
   OtherCosts = "Other Costs",
 }
 
@@ -20,6 +20,7 @@ export enum AccountType {
   // Current Assets
   AccountsReceivable = "Accounts Receivable",
   Bank = "Bank",
+  VatInputs = "Vat Inputs",
   OtherCurrentAssets = "Other Current Assets",
 
   // Long Term Assets
@@ -29,6 +30,7 @@ export enum AccountType {
   // Current Liabilities
   AccountsPayable = "Accounts Payable",
   CreditCard = "Credit Card",
+  VatOutputs = "Vat Outputs",
   OtherCurrentLiabilities = "Other Current Liabilities",
 
   // Long Term Liabilities
@@ -44,6 +46,7 @@ export enum AccountType {
   DirectCosts = "Direct Costs",
   IndirectCosts = "Indirect Costs",
   OtherCosts = "Other Costs",
+  ExchangeGainOrLoss = "Exchange Gain/Loss"
 }
 
 
@@ -52,12 +55,14 @@ type SafeEnumMap<K extends string, V> = { [key in K]: V } & { get: (key: Account
 export const AccountTypeCategoryMap: SafeEnumMap<AccountType, AccountCategory> = {
   [AccountType.AccountsReceivable]:       AccountCategory.CurrentAssets,
   [AccountType.Bank]:                     AccountCategory.CurrentAssets,
+  [AccountType.VatInputs]:                AccountCategory.CurrentAssets,
   [AccountType.OtherCurrentAssets]:       AccountCategory.CurrentAssets,
   [AccountType.FixedAssets]:              AccountCategory.LongTermAssets,
   [AccountType.OtherAssets]:              AccountCategory.LongTermAssets,
   [AccountType.AccountsPayable]:          AccountCategory.CurrentLiabilities,
   [AccountType.CreditCard]:               AccountCategory.CurrentLiabilities,
   [AccountType.OtherCurrentLiabilities]:  AccountCategory.CurrentLiabilities,
+  [AccountType.VatOutputs]:               AccountCategory.CurrentLiabilities,
   [AccountType.LongTermLiabilities]:      AccountCategory.LongTermLiabilities,
   [AccountType.Equity]:                   AccountCategory.Equity,
   [AccountType.RetainedEarnings]:         AccountCategory.Equity,
@@ -66,6 +71,7 @@ export const AccountTypeCategoryMap: SafeEnumMap<AccountType, AccountCategory> =
   [AccountType.IndirectCosts]:            AccountCategory.IndirectCosts,
   [AccountType.OtherIncome]:              AccountCategory.OtherIncome,
   [AccountType.OtherCosts]:               AccountCategory.OtherCosts,
+  [AccountType.ExchangeGainOrLoss]:       AccountCategory.OtherCosts,
 
   get(key) { return this[key] },
   set(key, value) { this[key] = value }

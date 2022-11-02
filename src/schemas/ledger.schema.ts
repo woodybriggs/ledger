@@ -1,23 +1,12 @@
-import { Ledger } from '@prisma/client';
-import { toZod } from 'tozod';
 import { z } from 'zod';
+import { LedgerType } from '@src/constants/ledgers';
+import { DateSchema } from './date.schema';
 
-export enum LedgerType {
-  Nominal = 'NOMINAL',
-  Supplier = 'SUPPLIER',
-  Customer = 'CUSTOMER'
-}
-
-export enum LedgerId {
-  Nominal = 'nominal',
-  Supplier = 'supplier',
-  Customer = 'customer'
-}
-
-export const LedgerSchema: toZod<Ledger> = z.object({
+export type LedgerDto = z.infer<typeof LedgerSchema>
+export const LedgerSchema = z.object({
   ledgerId: z.string(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  createdAt: DateSchema,
+  updatedAt: DateSchema,
   name: z.string(),
   ledgerType: z.string()
 })

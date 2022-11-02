@@ -1,388 +1,355 @@
 import {
-  Account,
-  AccountSubType,
-  Address,
-  Customer,
-  JournalEntry,
-  Supplier,
-  Transaction,
-} from "@prisma/client";
-import {
+  AccountSubTypeDto,
   CreateAccountSubTypeDto,
   ListAccountSubTypesDto,
   UpdateAccountSubTypeDto,
-} from "../schemas/account-subtype.schema";
+} from "@src/schemas/account-subtype.schema";
 import {
+  AccountDto,
   CreateAccountDto,
   ListAccountsQueryDto,
   UpdateAccountDto,
-} from "../schemas/account.schema";
+} from "@src/schemas/account.schema";
 import qs from "query-string";
-import { AccountDto } from "../../pages/api/accounts";
 import {
-  CreateTransactionDto,
   ListTransactionsQueryDto,
-} from "../schemas/transaction.schema";
+  TransactionDto,
+} from "@src/schemas/transaction.schema";
 import {
   CreateSupplierDto,
+  SupplierDto,
   UpdateSupplierDto,
-} from "../schemas/supplier.schema";
-import { CreateCustomerDto, UpdateCustomerDto } from "../schemas/customer.schema";
-import { CreateAddressDto, UpdateAddressDto } from "../schemas/address.schema";
-import { SupplierDto } from "../../pages/api/suppliers";
-import { CustomerDto } from "../../pages/api/customers";
-import { CreateInstantExpenseDto } from "../schemas/instant-expense.schema";
-import { TransactionDto } from "../../pages/api/transactions";
-import { CompanySettingsDto } from "../../pages/api/settings/company";
-import { UpdateCompanySettingsDto } from "../schemas/company-settings.schema";
-import { AddressDto } from "../../pages/api/addresses";
-import { CreateInstantSaleDto } from "../schemas/instant-sale.schema";
+} from "@src/schemas/supplier.schema";
+import {
+  CreateCustomerDto,
+  CustomerDto,
+  UpdateCustomerDto,
+} from "@src/schemas/customer.schema";
+import {
+  AddressDto,
+  CreateAddressDto,
+  UpdateAddressDto,
+} from "@src/schemas/address.schema";
+import { CompanySettingsDto } from "@src/pages/api/settings/company";
+import { UpdateCompanySettingsDto } from "@src/schemas/company-settings.schema";
+import {
+  CreateJournalEntryDto,
+  JournalEntryDto,
+} from "@src/schemas/journal-entry.schema";
+import {
+  CreateInstantExpenseDto,
+  CreatePurchaseInvoiceDto,
+  CreatePurchaseInvoicePaymentDto,
+  PurchaseRecordDto,
+} from "@src/schemas/purchase-record.schema";
+import {
+  TrialBalanceLineDto,
+  TrialBalanceQueryDto,
+  TrialBalanceSchema
+} from "@src/schemas/trial-balance.schema";
+import {
+  CreateInstantSaleDto,
+  CreateSaleInvoiceDto,
+  CreateSaleInvoicePaymentDto,
+  SaleRecordDto,
+} from "@src/schemas/sale-record.schema";
 
-const mergeRequestInits = (
-  ...args: (RequestInit | undefined)[]
-): RequestInit => {
-  const _args = args.filter(Boolean) as RequestInit[];
-  const result: RequestInit = _args.reduce((acc, next) => ({
-    ...acc,
-    ...next,
-  }));
-  return result;
-};
+class BaseApi {
+  constructor(public init?: RequestInit) {}
+
+  public async _get<TResponse>(
+    url: string,
+    query?: qs.StringifiableRecord
+  ): Promise<TResponse> {
+    const _url = qs.stringifyUrl({ url, query });
+    const response = await fetch(_url, this.makeReq());
+    return (await response.json()) as TResponse;
+  }
+
+  public async _post<TResponse, TDto = unknown>(
+    url: string,
+    dto: TDto
+  ): Promise<TResponse> {
+    const response = await fetch(
+      url,
+      this.makeReq({ method: "POST", body: JSON.stringify(dto) })
+    );
+    return (await response.json()) as TResponse;
+  }
+
+  public async _patch<TResponse, TDto = unknown>(
+    url: string,
+    dto: TDto
+  ): Promise<TResponse> {
+    const response = await fetch(
+      url,
+      this.makeReq({ method: "PATCH", body: JSON.stringify(dto) })
+    );
+    return (await response.json()) as TResponse;
+  }
+
+  public async _delete<TResponse, TDto = unknown>(
+    url: string
+  ): Promise<TResponse> {
+    const response = await fetch(url, this.makeReq({ method: "DELETE" }));
+    return (await response.json()) as TResponse;
+  }
+
+  private makeReq(...inits: RequestInit[]): RequestInit {
+    return inits.reduce((acc, next) => ({ ...acc, ...next }), this.init || {});
+  }
+}
+
 
 class ApiClient {
   constructor(private init?: RequestInit) {}
 
   public accounts = new AccountsApi(this.init);
   public accountSubTypes = new AccountSubTypesApi(this.init);
-  public transactions = new TransactionsApi(this.init);
+
   public journalEntries = new JournalEntriesApi(this.init);
-  public suppliers = new SuppliersApi(this.init);
-  public customers = new CustomersApi(this.init);
+  public transactions = new TransactionsApi(this.init);
+
   public addresses = new AddressApi(this.init);
-  public instantExpenses = new InstantExpenseApi(this.init);
-  public instantSales = new InstantSaleApi(this.init)
+
+  public suppliers = new SuppliersApi(this.init);
+  public purchaseRecords = new PurchaseRecordApi(this.init);
+
+  public customers = new CustomersApi(this.init);
+  public saleRecords = new SaleRecordApi(this.init);
+
   public companySettings = new CompanySettingsApi(this.init);
+  public reports = new ReportsApi(this.init);
 }
 
-class AccountsApi {
-  constructor(private init?: RequestInit) {}
-
-  public async list(
-    query?: ListAccountsQueryDto
-  ): Promise<{ data: AccountDto[] }> {
-    const url = qs.stringifyUrl({ url: "/api/accounts", query });
-    const response = await fetch(
-      url,
-      mergeRequestInits(this.init, { method: "GET" })
-    );
-    return response.json();
+class AccountsApi extends BaseApi {
+  public async list(query?: ListAccountsQueryDto) {
+    return await this._get<{ data: AccountDto[] }>("/api/accounts", query);
   }
 
-  public async get(accountId: string): Promise<Account> {
-    const response = await fetch(
+  public async get(accountId: string) {
+    return await this._get<AccountDto>(`/api/accounts/${accountId}`);
+  }
+
+  public async create(createAccountDto: CreateAccountDto) {
+    return await this._post<AccountDto>("/api/accounts", createAccountDto);
+  }
+
+  public async update(accountId: string, updateAccountDto: UpdateAccountDto) {
+    return await this._patch<AccountDto>(
       `/api/accounts/${accountId}`,
-      mergeRequestInits(this.init, { method: "GET" })
+      updateAccountDto
     );
-    return response.json();
-  }
-
-  public async create(createAccountDto: CreateAccountDto): Promise<Account> {
-    const init: RequestInit = {
-      method: "POST",
-      body: JSON.stringify(createAccountDto),
-    };
-    const response = await fetch(
-      "/api/accounts",
-      mergeRequestInits(this.init, init)
-    );
-    return response.json();
-  }
-
-  public async update(
-    accountId: string,
-    updateAccountDto: UpdateAccountDto
-  ): Promise<Account> {
-    const init: RequestInit = {
-      method: "PATCH",
-      body: JSON.stringify(updateAccountDto),
-    };
-    const response = await fetch(
-      `/api/accounts/${accountId}`,
-      mergeRequestInits(this.init, init)
-    );
-    return response.json();
   }
 }
 
-class AccountSubTypesApi {
-  constructor(private init?: RequestInit) {}
-
-  public async list(
-    query?: ListAccountSubTypesDto
-  ): Promise<{ data: AccountSubType[] }> {
-    const url = qs.stringifyUrl({ url: "/api/account-subtypes", query });
-    const response = await fetch(
-      url,
-      mergeRequestInits(this.init, { method: "GET" })
-    );
-    return response.json();
-  }
-
-  public async get(accountId: string): Promise<AccountSubType> {
-    const response = await fetch(
-      `/api/account-subtypes/${accountId}`,
-      mergeRequestInits(this.init, { method: "GET" })
-    );
-    return response.json();
-  }
-
-  public async create(
-    createAccountSubTypeDto: CreateAccountSubTypeDto
-  ): Promise<AccountSubType> {
-    const init: RequestInit = {
-      method: "POST",
-      body: JSON.stringify(createAccountSubTypeDto),
-    };
-    const response = await fetch(
+class AccountSubTypesApi extends BaseApi {
+  public async list(query?: ListAccountSubTypesDto) {
+    return await this._get<{ data: AccountSubTypeDto[] }>(
       "/api/account-subtypes",
-      mergeRequestInits(this.init, init)
+      query
     );
-    return response.json();
+  }
+
+  public async get(accountId: string){
+    return await this._get<AccountSubTypeDto>(
+      `/api/account-subtypes/${accountId}`
+    );
+  }
+
+  public async create(createAccountSubTypeDto: CreateAccountSubTypeDto) {
+    return await this._post<AccountSubTypeDto>(
+      "/api/account-subtypes",
+      createAccountSubTypeDto
+    );
   }
 
   public async update(
     accountSubTypeId: string,
     updateAccountSubTypeDto: UpdateAccountSubTypeDto
-  ): Promise<AccountSubType> {
-    const init: RequestInit = {
-      method: "PATCH",
-      body: JSON.stringify(updateAccountSubTypeDto),
-    };
-    const response = await fetch(
+  ) {
+    return await this._patch<AccountSubTypeDto>(
       `/api/account-subtypes/${accountSubTypeId}`,
-      mergeRequestInits(this.init, init)
+      updateAccountSubTypeDto
     );
-    return response.json();
   }
 }
 
-class TransactionsApi {
-  constructor(private init?: RequestInit) {}
-
-  public async list(
-    query?: ListTransactionsQueryDto
-  ): Promise<{ data: TransactionDto[] }> {
-    const url = qs.stringifyUrl({ url: "/api/transactions", query });
-    const response = await fetch(
-      url,
-      mergeRequestInits(this.init, { method: "GET" })
+class TransactionsApi extends BaseApi {
+  public async list(query?: ListTransactionsQueryDto) {
+    return await this._get<{ data: TransactionDto[] }>(
+      "/api/transactions",
+      query
     );
-    return response.json();
   }
 }
 
-class JournalEntriesApi {
-  constructor(private init?: RequestInit) {}
-
-  public async get(
-    journalEntryId: string
-  ): Promise<JournalEntry & { transactions: TransactionDto[] }> {
-    const response = await fetch(`/api/journal-entries/${journalEntryId}`);
-    return response.json();
+class JournalEntriesApi extends BaseApi {
+  public async list(query?: never) {
+    return await this._get<{ data: JournalEntryDto }>(
+      "/api/journal-entries/",
+      query
+    );
   }
 
-  public async create(
-    transactions: CreateTransactionDto[]
-  ): Promise<JournalEntry> {
-    const response = await fetch(
-      "/api/journal-entries",
-      mergeRequestInits(this.init, {
-        method: "POST",
-        body: JSON.stringify({ transactions }),
-      })
+  public async create(createJournalEntryDto: CreateJournalEntryDto) {
+    return await this._post<JournalEntryDto>(
+      "/api/journal-entries/",
+      createJournalEntryDto
     );
-    return response.json();
+  }
+
+  public async get(journalEntryId: string) {
+    return await this._get<JournalEntryDto>(
+      `/api/journal-entries/${journalEntryId}`
+    );
   }
 }
 
-class SuppliersApi {
-  constructor(private init?: RequestInit) {}
-
-  public async list(): Promise<{ data: SupplierDto[] }> {
-    const response = await fetch(
-      "/api/suppliers",
-      mergeRequestInits(this.init)
-    );
-    return response.json();
+class SuppliersApi extends BaseApi {
+  public async list() {
+    return await this._get<{ data: SupplierDto[] }>("/api/suppliers");
   }
 
-  public async create(
-    createSupplierDto: CreateSupplierDto
-  ): Promise<SupplierDto> {
-    const response = await fetch(
-      "/api/suppliers",
-      mergeRequestInits(this.init, {
-        method: "POST",
-        body: JSON.stringify(createSupplierDto),
-      })
-    );
-    return response.json();
+  public async create(dto: CreateSupplierDto) {
+    return await this._post<SupplierDto>("/api/suppliers", dto);
   }
 
-  public async get(supplierId: string): Promise<SupplierDto> {
-    const response = await fetch(
-      `/api/suppliers/${supplierId}`,
-      mergeRequestInits(this.init)
-    );
-    return response.json();
+  public async get(supplierId: string) {
+    return await this._get<SupplierDto>(`/api/suppliers/${supplierId}`);
   }
 
-  public async update(
-    supplierId: string,
-    updateSupplierDto: UpdateSupplierDto
-  ): Promise<SupplierDto> {
-    const response = await fetch(
-      `/api/suppliers/${supplierId}`,
-      mergeRequestInits(this.init, {
-        method: "PATCH",
-        body: JSON.stringify(updateSupplierDto),
-      })
-    );
-    return response.json();
+  public async update(supplierId: string, dto: UpdateSupplierDto) {
+    return await this._patch<SupplierDto>(`/api/suppliers/${supplierId}`, dto);
   }
 }
 
-class CustomersApi {
-  constructor(private init?: RequestInit) {}
-
-  public async list(): Promise<{ data: CustomerDto[] }> {
-    const response = await fetch(
-      "/api/customers",
-      mergeRequestInits(this.init)
-    );
-    return response.json();
+class CustomersApi extends BaseApi {
+  public async list() {
+    return await this._get<{ data: CustomerDto[] }>("/api/customers");
   }
 
-  public async create(createSupplierDto: CreateCustomerDto): Promise<Customer> {
-    const response = await fetch(
-      "/api/customers",
-      mergeRequestInits(this.init, {
-        method: "POST",
-        body: JSON.stringify(createSupplierDto),
-      })
-    );
-    return response.json();
+  public async create(dto: CreateCustomerDto) {
+    return await this._post<CustomerDto>("/api/customers", dto);
   }
 
-  public async get(customerId: string): Promise<CustomerDto> {
-    const response = await fetch(
-      `/api/customers/${customerId}`,
-      mergeRequestInits(this.init)
-    );
-    return response.json();
+  public async get(customerId: string) {
+    return await this._get<CustomerDto>(`/api/customers/${customerId}`);
   }
 
-  public async update(
-    customerId: string,
-    updateCustomerDto: UpdateCustomerDto
-  ): Promise<CustomerDto> {
-    const response = await fetch(
-      `/api/customers/${customerId}`,
-      mergeRequestInits(this.init, {
-        method: "PATCH",
-        body: JSON.stringify(updateCustomerDto),
-      })
-    );
-    return response.json();
+  public async update(customerId: string, dto: UpdateCustomerDto) {
+    return await this._patch<CustomerDto>(`/api/customers/${customerId}`, dto);
   }
 }
 
-class AddressApi {
-  constructor(private init?: RequestInit) {}
-
-  public async list(): Promise<{ data: AddressDto[] }> {
-    const response = await fetch(
-      "/api/addresses",
-      mergeRequestInits(this.init)
-    );
-    return response.json();
+class AddressApi extends BaseApi {
+  public async list() {
+    return await this._get<{ data: AddressDto[] }>("/api/addresses");
   }
 
-  public async create(createAddressDto: CreateAddressDto): Promise<AddressDto> {
-    const response = await fetch(
-      "/api/addresses",
-      mergeRequestInits(this.init, {
-        method: "POST",
-        body: JSON.stringify(createAddressDto),
-      })
-    );
-    return response.json();
+  public async create(dto: CreateAddressDto) {
+    return await this._post<AddressDto>("/api/addresses", dto);
   }
 
-  public async update(addressId: string, updateAddressDto: UpdateAddressDto): Promise<AddressDto> {
-    const response = await fetch(
-      `/api/addresses/${addressId}`,
-      mergeRequestInits(this.init, {
-        method: "PATCH",
-        body: JSON.stringify(updateAddressDto),
-      })
-    );
-    return response.json();
+  public async get(addressId: string) {
+    return await this._get<AddressDto>(`/api/addresses/${addressId}`);
+  }
+
+  public async update(addressId: string, dto: UpdateAddressDto) {
+    return await this._patch<AddressDto>(`/api/addresses/${addressId}`, dto);
   }
 }
 
-class InstantExpenseApi {
-  constructor(private init?: RequestInit) {}
-
-  public async create(data: CreateInstantExpenseDto): Promise<JournalEntry> {
-    const response = await fetch(
-      "/api/instant-expense",
-      mergeRequestInits(this.init, {
-        method: "POST",
-        body: JSON.stringify(data),
-      })
+class PurchaseRecordApi extends BaseApi {
+  public async list(query: { supplierId?: string }) {
+    return await this._get<{ data: PurchaseRecordDto[] }>(
+      "/api/purchase-records",
+      query
     );
-    return response.json();
+  }
+
+  public async get(purchaseRecordId: string) {
+    return this._get<PurchaseRecordDto>(
+      `/api/purchase-records/${purchaseRecordId}`
+    );
+  }
+
+  public async createInstantExpense(dto: CreateInstantExpenseDto) {
+    return await this._post<PurchaseRecordDto>("/api/purchase-records", dto);
+  }
+
+  public async createPurchaseInvoice(dto: CreatePurchaseInvoiceDto) {
+    return await this._post<PurchaseRecordDto>("/api/purchase-records", dto);
+  }
+
+  public async createPurchaseInvoicePayment(
+    dto: CreatePurchaseInvoicePaymentDto
+  ) {
+    return await this._post<PurchaseRecordDto>("/api/purchase-records", dto);
   }
 }
 
-class InstantSaleApi {
-  constructor(private init?: RequestInit) {}
-
-  public async create(data: CreateInstantSaleDto): Promise<JournalEntry> {
-    const response = await fetch(
-      "/api/instant-sale",
-      mergeRequestInits(this.init, {
-        method: "POST",
-        body: JSON.stringify(data),
-      })
+class SaleRecordApi extends BaseApi {
+  public async list(query: { customerId?: string }) {
+    return await this._get<{ data: SaleRecordDto[] }>(
+      "/api/sale-records",
+      query
     );
-    return response.json();
+  }
+
+  public async get(saleRecordId: string) {
+    return await this._get<SaleRecordDto>(`/api/sale-records/${saleRecordId}`);
+  }
+
+  public async createInstantSale(dto: CreateInstantSaleDto) {
+    return await this._post<SaleRecordDto>("/api/sale-records", dto);
+  }
+
+  public async createSalesInvoice(dto: CreateSaleInvoiceDto) {
+    return await this._post<SaleRecordDto>("/api/sale-records", dto);
+  }
+
+  public async createSalesInvoicePayment(dto: CreateSaleInvoicePaymentDto) {
+    return await this._post<SaleRecordDto>("/api/sale-records", dto);
   }
 }
 
-class CompanySettingsApi {
-  constructor(private init?: RequestInit) {}
+class CompanySettingsApi extends BaseApi {
+  public async get() {
+    return await this._get<CompanySettingsDto>("/api/settings/company");
+  }
 
-  public async get(): Promise<CompanySettingsDto> {
-    const response = await fetch(
+  public async update(updateCompanySettingsDto: UpdateCompanySettingsDto) {
+    return await this._patch<CompanySettingsDto>(
       "/api/settings/company",
-      mergeRequestInits(this.init)
+      updateCompanySettingsDto
     );
-    return response.json();
+  }
+}
+
+class ReportsApi extends BaseApi {
+  public async trialBalance(query: TrialBalanceQueryDto) {
+    const trialBalance = await this._get<{ data: TrialBalanceLineDto[] }>(
+      "/api/reports/trial-balance",
+      {
+        fromDate: query.fromDate.toISOString(),
+        toDate: query.toDate.toISOString(),
+      }
+    );
+
+    const result = TrialBalanceSchema.parse(trialBalance)
+    return result
   }
 
-  public async update(
-    updateCompanySettingsDto: UpdateCompanySettingsDto
-  ): Promise<CompanySettingsDto> {
-    const response = await fetch(
-      "/api/settings/company",
-      mergeRequestInits(this.init, {
-        method: "PATCH",
-        body: JSON.stringify(updateCompanySettingsDto),
-      })
-    );
-    return response.json();
+  public exportTrialBalance(query: TrialBalanceQueryDto): string {
+    const url = qs.stringifyUrl({
+      url: "/api/reports/trial-balance/export",
+      query: {
+        fromDate: query.fromDate.toISOString(),
+        toDate: query.toDate.toISOString(),
+      },
+    });
+    return url;
   }
 }
 
@@ -400,6 +367,14 @@ export enum QueryMutationKey {
 
   JOURNAL_ENTRIES_GET = "journal-entries.get",
 
+  PURCHASE_RECORDS_LIST = "purchase-records.list",
+  PURCHASE_RECORDS_GET = "purchase-records.get",
+  PURCHASE_RECORDS_CREATE = "purchase-records.create",
+
+  SALE_RECORDS_LIST = "sale-records.list",
+  SALE_RECORDS_GET = "sale-records.get",
+  SALE_RECORDS_CREATE = "sale-records.create",
+
   CUSTOMERS_LIST = "customers.list",
   CUSTOMERS_GET = "customers.get",
   CUSTOMERS_CREATE = "customers.create",
@@ -413,6 +388,8 @@ export enum QueryMutationKey {
   SUPPLIERS_DELETE = "suppliers.delete",
 
   COMPANY_SETTINGS_GET = "settings.company.get",
+
+  TRIAL_BALANCE_GET = "reports.trial-balance.get",
 }
 
 export const queryMutationKey = (

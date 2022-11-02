@@ -20,7 +20,9 @@ type CurrencyItem = {
 
 var codePrecisionMap = new Map<string, string>()
 
-export const getCurrencyPrecision = (code: string): number | null => {
+export const getCurrencyPrecision = (code: string | null): number => {
+
+  if (!code) return 2
 
   const hasEntry = codePrecisionMap.has(code)
 
@@ -29,10 +31,10 @@ export const getCurrencyPrecision = (code: string): number | null => {
   }
 
   const precision = codePrecisionMap.get(code)
-  if (!precision) return null
+  if (!precision) return 2
 
   const precisionNumber = parseInt(precision);
-  if (isNaN(precisionNumber)) return null
+  if (isNaN(precisionNumber)) return 2
 
   return precisionNumber
 

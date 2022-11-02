@@ -10,16 +10,16 @@ import { Account } from "@prisma/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
-import { SupplierDto } from "../../pages/api/suppliers";
-import { AccountSelect } from "../components/AccountSelect";
-import { CurrencySelect } from "../components/CurrencySelect";
-import { AccountType } from "../constants/account-taxonimies";
-import { AddressType, CreateAddressDto } from "../schemas/address.schema";
-import { CreateSupplierDto } from "../schemas/supplier.schema";
-import { api, QueryMutationKey } from "../utils/api-client";
+import { AccountSelect } from "@src/components/AccountSelect";
+import { CurrencySelect } from "@src/components/CurrencySelect";
+import { AccountType } from "@src/constants/account-taxonimies";
+import { AddressType, CreateAddressDto } from "@src/schemas/address.schema";
+import { CreateSupplierDto, SupplierDto } from "@src/schemas/supplier.schema";
+import { api, QueryMutationKey } from "@src/utils/api-client";
+import { AccountDto } from "@src/schemas/account.schema";
 
 type SupplierFormValues = {
-  supplier: CreateSupplierDto & { defaultNominalAccount: Account };
+  supplier: CreateSupplierDto & { defaultNominalAccount: AccountDto | null};
   shippingAddress?: CreateAddressDto | null;
   shippingAddressSameAsBilling: boolean;
   billingAddress?: CreateAddressDto | null;
@@ -31,7 +31,7 @@ const objectIsFilledWithNulls = <T extends Record<string, any> | undefined,>(o: 
 }
 
 const createSupplier = async (data: SupplierFormValues) => {
-  data.supplier.defaultNominalAccountId = data.supplier.defaultNominalAccount.accountId;
+  data.supplier.defaultNominalAccountId = data.supplier.defaultNominalAccount?.accountId;
   const supplier = await api.suppliers.create(data.supplier);
 
   if (data.shippingAddressSameAsBilling) data.shippingAddress = data.billingAddress;
@@ -50,7 +50,7 @@ const createSupplier = async (data: SupplierFormValues) => {
 }
 
 const updateSupplier = async (supplier: SupplierDto, data: SupplierFormValues) => {
-  data.supplier.defaultNominalAccountId = data.supplier.defaultNominalAccount.accountId;
+  data.supplier.defaultNominalAccountId = data.supplier.defaultNominalAccount?.accountId;
   await api.suppliers.update(supplier.supplierId, data.supplier);
 
   if (data.shippingAddressSameAsBilling) data.shippingAddress = data.billingAddress;
@@ -161,15 +161,12 @@ export const SupplierForm: React.FC<SupplierFormProps> = (props) => {
                   <Controller
                     control={control}
                     name={"supplier.defaultNominalAccount"}
-                    rules={{ required: true }}
-                    render={({ field, fieldState: { error } }) => (
+                    render={({ field }) => (
                       <AccountSelect
-                        withAsterisk
                         label={"Default Nominal Account"}
                         onChange={field.onChange}
                         onBlur={field.onBlur}
-                        value={field.value}
-                        error={error && "Default account is required"}
+                        value={field.value? field.value : undefined}
                         setting="include"
                         searchable
                         types={[

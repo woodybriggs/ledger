@@ -2,7 +2,7 @@ import { Select, SelectProps } from "@mantine/core";
 import {
   AccountType,
   AccountTypeCategoryMap,
-} from "../constants/account-taxonimies";
+} from "@src/constants/account-taxonimies";
 
 type AccountTypeSelectProps = Omit<SelectProps, "data"> & ({ types?: AccountType[], setting?: 'include' } | { setting?: 'exclude', types?: AccountType[] });
 

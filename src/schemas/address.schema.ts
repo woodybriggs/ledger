@@ -1,20 +1,33 @@
-import { Address } from '@prisma/client';
-import { toZod } from 'tozod';
 import { z } from 'zod';
-import { AddressDto } from '../../pages/api/addresses';
-
-
+import { DateSchema } from './date.schema';
+import { CustomerDto, CustomerSchema } from './customer.schema';
+import { SupplierSchema } from './supplier.schema';
 
 export enum AddressType {
   Billing = 'BILLING',
   Shipping = 'SHIPPING'
 }
 
-export const AddressSchema: toZod<AddressDto> = z.object({
+export interface IAddress {
+  addressId: string
+  createdAt: string | Date
+  updatedAt: string | Date
+  
+  addressLine1: string
+  addressLine2: string | null
+  addressLine3: string | null
+  addressLine4: string | null
+  city: string | null
+  provinceStateCounty: string | null
+  zipPostalCode: string | null
+  country: string
+}
+
+export const BaseAddressSchema = z.object({
   addressId: z.string(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-  //,
+  createdAt: DateSchema,
+  updatedAt: DateSchema,
+
   addressLine1: z.string(),
   addressLine2: z.string().nullable(),
   addressLine3: z.string().nullable(),
@@ -22,13 +35,14 @@ export const AddressSchema: toZod<AddressDto> = z.object({
   city: z.string().nullable(),
   provinceStateCounty: z.string().nullable(),
   zipPostalCode: z.string().nullable(),
-  country: z.string(),
-  supplierId: z.string().nullable(),
-  customerId: z.string().nullable()
+  country: z.string()
 })
 
+export type AddressDto = z.infer<typeof AddressSchema>
+export const AddressSchema: z.ZodType<IAddress> = z.lazy(() => BaseAddressSchema)
+
 export type CreateAddressDto = z.infer<typeof CreateAddressSchema>
-export const CreateAddressSchema = AddressSchema.omit({
+export const CreateAddressSchema = BaseAddressSchema.omit({
   addressId: true,
   createdAt: true,
   updatedAt: true
@@ -39,15 +53,6 @@ export const CreateAddressSchema = AddressSchema.omit({
 })
 
 export type UpdateAddressDto = z.infer<typeof UpdateAddressSchema>
-export const UpdateAddressSchema = CreateAddressSchema.partial({
-  addressLine1: true,
-  addressLine2: true,
-  addressLine3: true,
-  addressLine4: true,
-  city: true,
-  provinceStateCounty: true,
-  zipPostalCode: true,
-  country: true
-}).extend({
+export const UpdateAddressSchema = CreateAddressSchema.partial().extend({
   addressType: z.nativeEnum(AddressType)
 })

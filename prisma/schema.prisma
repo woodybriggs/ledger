@@ -12,29 +12,31 @@ datasource db {
 
 model AccountSubType {
   accountSubTypeId String @id @default(cuid())
-  name String
-  category String
-  type String
+  name             String
+  category         String
+  type             String
 
   accounts Account[]
 
   @@unique([name, category, type])
 }
 
-
 model Account {
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
-  accountId        String           @id @default(cuid())
-  
-  name             String
-  number           Int
-  denomination     String?
-  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  accountId String   @id @default(cuid())
+
+  name         String
+  number       Int
+  denomination String?
+
   category         String
   type             String
   accountSubTypeId String?
   accountSubType   AccountSubType? @relation(fields: [accountSubTypeId], references: [accountSubTypeId])
+
+  bankId String?
+  bank   Bank?
 
   transactions Transaction[]
 
@@ -43,6 +45,8 @@ model Account {
 
   suppliers Supplier[]
   customers Customer[]
+
+  lineItems LineItem[]
 }
 
 model AccountClosure {
@@ -75,28 +79,21 @@ model Transaction {
   updatedAt     DateTime @updatedAt
   transactionId String   @id @default(cuid())
 
-  // TODO implement transaction types so that in supplier accounts you can show total Amount instead of debit and credit
-  transactionType String
-
   transactionDate DateTime
-  description     String
-
-  debitAmount  Float
-  creditAmount Float
-
-  denomination String
+  debitAmount     Decimal
+  creditAmount    Decimal
 
   accountId String?
   account   Account? @relation(fields: [accountId], references: [accountId])
 
   supplierId String?
-  supplier Supplier? @relation(fields: [supplierId], references: [supplierId])
-  
+  supplier   Supplier? @relation(fields: [supplierId], references: [supplierId])
+
   customerId String?
-  customer Customer? @relation(fields: [customerId], references: [customerId])
+  customer   Customer? @relation(fields: [customerId], references: [customerId])
 
   journalEntryId String
-  jounralEntry   JournalEntry @relation(fields: [journalEntryId], references: [journalEntryId])
+  journalEntry   JournalEntry @relation(fields: [journalEntryId], references: [journalEntryId])
 
   ledgerId String
   ledger   Ledger @relation(fields: [ledgerId], references: [ledgerId])
@@ -107,13 +104,18 @@ model JournalEntry {
   updatedAt      DateTime @updatedAt
   journalEntryId String   @id @default(cuid())
 
-
-  exchangeRate Float?
+  exchangeRate Decimal?
 
   bankReconciledDate DateTime?
   vatReportedDate    DateTime?
 
   transactions Transaction[]
+
+  purchaseRecordId String?         @unique
+  purchaseRecord   PurchaseRecord? @relation(fields: [purchaseRecordId], references: [purchaseRecordId])
+
+  saleRecordId String?     @unique
+  saleRecord   SaleRecord? @relation(fields: [saleRecordId], references: [saleRecordId])
 }
 
 model Supplier {
@@ -124,8 +126,8 @@ model Supplier {
   name         String
   denomination String
 
-  defaultNominalAccountId String
-  defaultNominalAccount   Account @relation(fields: [defaultNominalAccountId], references: [accountId])
+  defaultNominalAccountId String?
+  defaultNominalAccount   Account? @relation(fields: [defaultNominalAccountId], references: [accountId])
 
   shippingAddressId String?  @unique
   shippingAddress   Address? @relation(name: "supplierShippingAddress", fields: [shippingAddressId], references: [addressId])
@@ -136,7 +138,8 @@ model Supplier {
   ledgerId String
   ledger   Ledger @relation(fields: [ledgerId], references: [ledgerId])
 
-  transactions Transaction[]
+  transactions    Transaction[]
+  purchaseRecords PurchaseRecord[]
 }
 
 model Customer {
@@ -147,8 +150,8 @@ model Customer {
   name         String
   denomination String
 
-  defaultNominalAccountId String
-  defaultNominalAccount   Account @relation(fields: [defaultNominalAccountId], references: [accountId])
+  defaultNominalAccountId String?
+  defaultNominalAccount   Account? @relation(fields: [defaultNominalAccountId], references: [accountId])
 
   shippingAddressId String?  @unique
   shippingAddress   Address? @relation(name: "customerShippingAddress", fields: [shippingAddressId], references: [addressId])
@@ -160,6 +163,7 @@ model Customer {
   ledger   Ledger @relation(fields: [ledgerId], references: [ledgerId])
 
   transactions Transaction[]
+  saleRecords  SaleRecord[]
 }
 
 model Address {
@@ -185,19 +189,94 @@ model Address {
   supplierByShipping Supplier? @relation(name: "supplierShippingAddress")
 }
 
-// model Invoice {
-//   invoiceId String @id @default(cuid())
+model LineItem {
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  lineItemId String   @id @default(cuid())
 
-//   status String
+  description String
+  netAmount   Decimal
+  vatAmount   Decimal
+  grossAmount Decimal
 
-//   // customer or supplier
+  nominalAccountId String
+  nominalAccount   Account @relation(fields: [nominalAccountId], references: [accountId])
 
-//   // line items
-// }
+  purchaseRecordId String?
+  purchaseRecord   PurchaseRecord? @relation(fields: [purchaseRecordId], references: [purchaseRecordId])
 
-// model Bank {
-//   bankId String @id @default(cuid())
+  saleRecordId String?
+  saleRecord   SaleRecord? @relation(fields: [saleRecordId], references: [saleRecordId])
+}
 
-//   nominalAccountId String
-//   nominalAccount Account @relation(fields: [nominalAccountId], references: [accountId])
-// }
+model PurchaseRecord {
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  purchaseRecordId String   @id @default(cuid())
+  transactionType  String
+  transactionDate  DateTime
+  status           String   @default("Outstanding")
+
+  reference      String?
+  attachmentLink String?
+
+  denomination String
+  exchangeRate Decimal
+
+  lineItems   LineItem[]
+  grossAmount Decimal
+
+  supplierId String?
+  supplier   Supplier? @relation(fields: [supplierId], references: [supplierId])
+
+  dueDate           DateTime?
+  purchaseInvoiceId String?
+  purchaseInvoice   PurchaseRecord? @relation(fields: [purchaseInvoiceId], references: [purchaseRecordId], name: "purchaseInvoicePayment")
+
+  payments PurchaseRecord[] @relation(name: "purchaseInvoicePayment")
+
+  journalEntryId String?       @unique
+  journalEntry   JournalEntry?
+}
+
+model SaleRecord {
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  saleRecordId    String   @id @default(cuid())
+  transactionType String
+  transactionDate DateTime
+  status          String   @default("Outstanding")
+
+  reference      String?
+  attachmentLink String?
+
+  denomination String
+  exchangeRate Decimal
+
+  lineItems   LineItem[]
+  grossAmount Decimal
+
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [customerId])
+
+  dueDate       DateTime?
+  saleInvoiceId String?
+  saleInvoice   SaleRecord? @relation(fields: [saleInvoiceId], references: [saleRecordId], name: "saleInvoicePayment")
+
+  payments SaleRecord[] @relation(name: "saleInvoicePayment")
+
+  journalEntryId String?       @unique
+  journalEntry   JournalEntry?
+}
+
+model Bank {
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  bankId    String   @id @default(cuid())
+
+  name         String
+  denomination String
+
+  nominalAssetAccountId String  @unique
+  nominalAssetAccount   Account @relation(fields: [nominalAssetAccountId], references: [accountId])
+}
