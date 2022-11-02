@@ -32,6 +32,7 @@ import { AddressDto, AddressType } from "@src/schemas/address.schema";
 import { PurchaseForm } from "@src/forms/Purchase.form";
 import { TransactionType } from "@src/constants/transaction-types";
 import { SupplierDto } from "@src/schemas/supplier.schema";
+import { AddressModel } from "@src/models/Address.model";
 
 const composeAddress = (address: AddressDto | null): string => {
   if (address === null) return "";
@@ -149,13 +150,13 @@ const SupplierTable: React.FC<{
     columnHelper.accessor("billingAddress", {
       header: "Billing Address",
       cell: (context) => (
-        <span>{composeAddress(context.row.original.billingAddress!)}</span>
+        <span>{new AddressModel(context.row.original.billingAddress).toString()}</span>
       ),
     }),
     columnHelper.accessor("shippingAddress", {
       header: "Shipping Address",
       cell: (context) => (
-        <span>{composeAddress(context.row.original.shippingAddress!)}</span>
+        <span>{new AddressModel(context.row.original.shippingAddress).toString()}</span>
       ),
     }),
     columnHelper.display({

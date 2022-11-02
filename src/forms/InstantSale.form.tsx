@@ -1,16 +1,9 @@
 import { Button, Group, SimpleGrid, Stack, TextInput } from "@mantine/core";
 import { DatePicker } from "@mantine/dates";
-import { Account, PurchaseRecord, SaleRecord } from "@prisma/client";
+import { Account } from "@prisma/client";
 import { UseMutateFunction } from "@tanstack/react-query";
 import { Prisma } from "@prisma/client";;
-import {
-  Control,
-  Controller,
-  FormProvider,
-  useFieldArray,
-  useForm,
-  useWatch,
-} from "react-hook-form";
+import { Controller, FormProvider, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { AccountSelect } from "@src/components/AccountSelect";
 import { ExchangeRateInputNew } from "@src/components/ExchangeRateInput";
 import {
@@ -106,6 +99,7 @@ export const InstantSaleForm: React.FC<{
                   label="Receipt Account"
                   setting="include"
                   types={[
+                    AccountType.Bank,
                     AccountType.OtherCurrentAssets,
                     AccountType.OtherCurrentLiabilities,
                   ]}

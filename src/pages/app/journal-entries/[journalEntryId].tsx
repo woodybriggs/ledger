@@ -21,13 +21,13 @@ const TransactionsTable: React.FC<{
         <span>{new Date(props.getValue()).toLocaleDateString()}</span>
       )
     }),
-    columnHelper.accessor('account.name', {
-      header: "Account",
+    columnHelper.accessor((og) => (og.account ? og.account.name : ''), {
+      header: "Account"
     }),
-    columnHelper.accessor('supplier.name', {
-      header: "Suppler",
+    columnHelper.accessor((og) => (og.supplier ? og.supplier.name : ''), {
+      header: "Supplier",
     }),
-    columnHelper.accessor('customer.name', {
+    columnHelper.accessor((og) => (og.customer ? og.customer.name : ''), {
       header: "Customer",
     }),
     columnHelper.accessor('debitAmount', {
@@ -99,7 +99,7 @@ function JournalEntryDetails () {
         <h1>Journal Entry {data.journalEntryId}</h1>
       </Group>
 
-      <TransactionsTable data={data.transactions}/>
+      { data.transactions && <TransactionsTable data={data.transactions}/> }
     </>
   )
 }

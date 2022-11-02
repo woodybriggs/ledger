@@ -5,21 +5,18 @@ import { InstantExpenseModel, LineItemModel, PurchaseInvoiceModel } from "./Purc
 
 describe("Purchase Record Model", () => {
   test("Instant Expense", () => {
-    const expenseDate = new Date();
-    const supplier = { supplierId: "cloudflare" };
+    const supplier = { supplierId: "cloudflare", denomination: "USD" };
     const paymentAccount = { accountId: "director-loan" };
     const vatInputsAccount = { accountId: "vat-inputs" };
     const exchangeRate = new Prisma.Decimal(1.2);
-    const expenseDenomination = 'USD';
 
-    const instantExpense = new InstantExpenseModel(
-      expenseDate,
+    const instantExpense = new InstantExpenseModel({
+      date: new Date(),
       supplier,
       paymentAccount,
       vatInputsAccount,
-      expenseDenomination,
       exchangeRate
-    );
+    });
 
     const expenseAccount = { accountId: "web-hosting" };
     const lineItemNetAmount = new Prisma.Decimal(5);
@@ -61,19 +58,19 @@ describe("Purchase Record Model", () => {
   });
 
   test("Purchase Invoice", () => {
-    const expenseDate = new Date();
-    const supplier = { supplierId: "cloudflare" };
+    const supplier = { supplierId: "cloudflare", denomination: 'USD' };
     const vatInputsAccount = { accountId: "vat-inputs" };
+    const paymentAccount = { accountId: "director-loan" }
     const exchangeRate = new Prisma.Decimal(1.2);
-    const expenseDenomination = 'USD'
 
-    const purchaseInvoice = new PurchaseInvoiceModel(
-      expenseDate,
+    const purchaseInvoice = new PurchaseInvoiceModel({
+      date: new Date(),
       supplier,
+      paymentAccount,
       vatInputsAccount,
-      expenseDenomination,
-      exchangeRate
-    );
+      exchangeRate,
+      dueDate: new Date("2100-01-01")
+    });
 
     const expenseAccount = { accountId: "web-hosting" };
     const lineItemNetAmount = new Prisma.Decimal(5);

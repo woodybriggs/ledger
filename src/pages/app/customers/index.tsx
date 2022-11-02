@@ -28,17 +28,11 @@ import { DebouncedSearchInput } from "@src/components/DebouncedSearchInput";
 
 import { rankItem } from "@tanstack/match-sorter-utils";
 import { CustomerForm } from "@src/forms/Customer.form";
-import { AddressDto, AddressType } from "@src/schemas/address.schema";
+import { AddressType } from "@src/schemas/address.schema";
 import { SaleForm } from "@src/forms/Sale.form";
 import { CustomerDto } from "@src/schemas/customer.schema";
 import { SaleRecordType } from "@src/schemas/sale-record.schema";
-
-const composeAddress = (address: AddressDto | null): string => {
-  if (address === null) return "";
-
-  const { addressId, createdAt, updatedAt, ...rest } = address;
-  return Object.values(rest).filter(Boolean).join(", ");
-};
+import { AddressModel } from "@src/models/Address.model";
 
 const CustomerActionsMenu: React.FC<{
   customer: CustomerDto
@@ -118,7 +112,7 @@ const CustomerTable: React.FC<{
           original: { customerId, name },
         },
       }) => (
-        <Link href={`/customers/${customerId}`}>
+        <Link href={`/app/customers/${customerId}`}>
           <Text variant="link"> {name} </Text>
         </Link>
       ),
@@ -143,13 +137,13 @@ const CustomerTable: React.FC<{
     columnHelper.accessor("billingAddress", {
       header: "Billing Address",
       cell: (context) => (
-        <span>{composeAddress(context.row.original.billingAddress!)}</span>
+        <span>{new AddressModel(context.row.original.billingAddress).toString()}</span>
       ),
     }),
     columnHelper.accessor("shippingAddress", {
       header: "Shipping Address",
       cell: (context) => (
-        <span>{composeAddress(context.row.original.shippingAddress!)}</span>
+        <span>{new AddressModel(context.row.original.shippingAddress).toString()}</span>
       ),
     }),
     columnHelper.display({
@@ -220,7 +214,7 @@ function Customers() {
   const [createSalesInvoiceFormOpen, setCreateSalesInvoiceFormOpen] =
     useState(false);
 
-  const { data, isLoading } = useQuery([QueryMutationKey.SUPPLIERS_LIST], () =>
+  const { data, isLoading } = useQuery([QueryMutationKey.CUSTOMERS_LIST], () =>
     api.customers.list()
   );
 

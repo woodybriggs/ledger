@@ -51,9 +51,10 @@ export type CreateCustomerDto = z.infer<typeof CreateCustomerSchema>
 export const CreateCustomerSchema = BaseCustomerSchema.omit({
   createdAt: true,
   updatedAt: true,
-  supplierId: true,
+  customerId: true,
   billingAddressId: true,
   shippingAddressId: true,
+  ledgerId: true
 }).extend({
   defaultNominalAccountId: z.string().nullable()
 })

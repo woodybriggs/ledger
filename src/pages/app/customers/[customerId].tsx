@@ -122,7 +122,7 @@ function CustomerDetail() {
   const { customerId } = query as { customerId: string };
 
   const { data: customer, isLoading: customerLoading } = useQuery(
-    [queryMutationKey(QueryMutationKey.SUPPLIERS_GET, customerId)],
+    [queryMutationKey(QueryMutationKey.CUSTOMERS_GET, customerId)],
     () => api.customers.get(customerId),
     {
       enabled: Boolean(customerId),
@@ -130,7 +130,7 @@ function CustomerDetail() {
   );
 
   const { data: saleRecords, isLoading: saleRecordsLoading } = useQuery(
-    [queryMutationKey(QueryMutationKey.PURCHASE_RECORDS_LIST, customerId)],
+    [queryMutationKey(QueryMutationKey.SALE_RECORDS_LIST, customerId)],
     () => api.saleRecords.list({ customerId }),
     {
       enabled: Boolean(customerId)

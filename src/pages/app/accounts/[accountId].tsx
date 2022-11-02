@@ -10,7 +10,6 @@ import {
   Text,
   Table
 } from "@mantine/core";
-import { Account, Transaction } from "@prisma/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import Link from "next/link";
@@ -134,7 +133,7 @@ const TransactionsTable: React.FC<{
     columnHelper.accessor("journalEntryId", {
       header: "Journal Entry",
       cell: (props) => (
-        <Link href={`/journal-entries/${props.getValue()}`}>
+        <Link href={`/app/journal-entries/${props.getValue()}`}>
           <Text variant="link">Entry</Text>
         </Link>
       ),

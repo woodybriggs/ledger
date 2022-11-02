@@ -6,7 +6,6 @@ import {
   Stack,
   TextInput,
 } from "@mantine/core";
-import { Account } from "@prisma/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
@@ -19,7 +18,7 @@ import { api, QueryMutationKey } from "@src/utils/api-client";
 import { AccountDto } from "@src/schemas/account.schema";
 
 type CustomerFormValues = {
-  customer: CreateCustomerDto & { defaultNominalAccount: AccountDto };
+  customer: CreateCustomerDto & { defaultNominalAccount: AccountDto | null | undefined };
   shippingAddress?: CreateAddressDto | null;
   shippingAddressSameAsBilling: boolean;
   billingAddress?: CreateAddressDto | null;
@@ -27,11 +26,12 @@ type CustomerFormValues = {
 
 const objectIsFilledWithNulls = <T extends Record<string, any> | undefined,>(o: T): boolean => {
   if (!o) return true
-  return Object.values(o).reduce((acc, n) => acc === true && n === null, true)
+  return Object.values(o).reduce((acc, n) => acc === true && (n === null || n === undefined), true)
 }
 
 const createCustomer = async (data: CustomerFormValues) => {
-  data.customer.defaultNominalAccountId = data.customer.defaultNominalAccount.accountId;
+  data.customer.defaultNominalAccountId = data.customer.defaultNominalAccount?.accountId || null;
+  console.log(data.customer)
   const customer = await api.customers.create(data.customer);
 
   if (data.shippingAddressSameAsBilling) data.shippingAddress = data.billingAddress;
@@ -50,7 +50,7 @@ const createCustomer = async (data: CustomerFormValues) => {
 }
 
 const updateCustomer = async (customer: CustomerDto, data: CustomerFormValues) => {
-  data.customer.defaultNominalAccountId = data.customer.defaultNominalAccount.accountId;
+  data.customer.defaultNominalAccountId = data.customer?.defaultNominalAccount?.accountId || null;
   await api.customers.update(customer.customerId, data.customer);
 
   if (data.shippingAddressSameAsBilling) data.shippingAddress = data.billingAddress;
@@ -93,13 +93,13 @@ export const CustomerForm: React.FC<CustomerFormProps> = (props) => {
   const queryClient = useQueryClient();
 
   const { mutate, isLoading } = useMutation(
-    [QueryMutationKey.SUPPLIERS_CREATE],
+    [QueryMutationKey.CUSTOMERS_CREATE],
     async (data: CustomerFormValues) => {
       mode === 'create' ? await createCustomer(data) : await updateCustomer(props.customer, data)
     },
     {
       onSuccess: () => {
-        queryClient.invalidateQueries([QueryMutationKey.SUPPLIERS_LIST]);
+        queryClient.invalidateQueries([QueryMutationKey.CUSTOMERS_LIST]);
         onSuccessfulSave();
       },
     }
@@ -161,15 +161,12 @@ export const CustomerForm: React.FC<CustomerFormProps> = (props) => {
                   <Controller
                     control={control}
                     name={"customer.defaultNominalAccount"}
-                    rules={{ required: true }}
                     render={({ field, fieldState: { error } }) => (
                       <AccountSelect
-                        withAsterisk
                         label={"Default Nominal Account"}
                         onChange={field.onChange}
                         onBlur={field.onBlur}
-                        value={field.value}
-                        error={error && "Default account is required"}
+                        value={field.value || undefined}
                         setting="include"
                         searchable
                         types={[

@@ -2,11 +2,9 @@ import { TextInput, ActionIcon, Stack, Table } from "@mantine/core";
 import { Account } from "@prisma/client";
 import { IconArrowsSplit2, IconTrash } from "@tabler/icons";
 import { ColumnDef, createColumnHelper, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
-import { Prisma } from "@prisma/client";;
-import { useEffect, useState } from "react";
-import { UseFieldArrayRemove, useFormContext, Controller, FieldArrayMethodProps, useWatch, ControllerRenderProps, ControllerFieldState, UseFormStateReturn } from "react-hook-form";
+import { Prisma } from "@prisma/client";
+import { UseFieldArrayRemove, useFormContext, Controller, FieldArrayMethodProps } from "react-hook-form";
 import { AccountType } from "@src/constants/account-taxonimies";
-import { Denomination } from "@src/hooks/api-hooks";
 import { AccountSelect } from "./AccountSelect";
 import { getCurrencyPrecision } from "./CurrencySelect";
 import { MoneyInput } from "./MoneyInput";
@@ -88,8 +86,6 @@ export const LineItemsTableInput: React.FC<LineItemsTableInputProps> = ({
               types={[
                 AccountType.AccountsReceivable,
                 AccountType.AccountsPayable,
-                AccountType.Income,
-                AccountType.OtherIncome,
                 AccountType.RetainedEarnings,
                 AccountType.LongTermLiabilities
               ]}
